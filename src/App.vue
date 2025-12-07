@@ -73,7 +73,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeMount } from 'vue'
+import { computed, onBeforeMount, provide } from 'vue'
 import NewsSubscription from './components/NewsSubscription.vue'
 import NewsList from './components/NewsList.vue'
 import { useNewsSocket } from './composables/useNewsSocket'
@@ -102,8 +102,17 @@ const {
   serverStatus,
   subscribe,
   unsubscribe,
-  getServerStatus
+  getServerStatus,
+  getNewsPage,
+  newsPageData,
+  refreshAllNewsDisplay
 } = newsSocket
+
+// 컴포넌트에 필요한 함수와 데이터 주입
+provide('getNewsPage', getNewsPage)
+provide('newsPageData', newsPageData)
+provide('refreshAllNewsDisplay', refreshAllNewsDisplay)
+provide('subscriptions', subscriptions)
 
 const isLoading = computed(() => newsQuery.isLoading.value || allNewsQuery.isLoading.value)
 const displayNews = computed(() => {
@@ -153,17 +162,16 @@ const formatBytes = (bytes) => {
 <style scoped>
 .app-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #f8f7ff;
   display: flex;
   flex-direction: column;
 }
 
 .app-header {
-  background: rgba(0, 0, 0, 0.3);
-  color: white;
-  padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
+  background: white;
+  border-bottom: 2px solid #e0e7ff;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.08);
 }
 
 .header-content {
@@ -175,8 +183,10 @@ const formatBytes = (bytes) => {
 }
 
 .app-header h1 {
-  font-size: 2rem;
+  font-size: 1.75rem;
   margin: 0;
+  color: #4f46e5;
+  font-weight: 700;
 }
 
 .header-status {
@@ -189,22 +199,23 @@ const formatBytes = (bytes) => {
   padding: 0.5rem 1rem;
   border-radius: 20px;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .status-badge.connected {
-  background: rgba(76, 175, 80, 0.3);
-  color: #fff;
+  background: #d1fae5;
+  color: #065f46;
 }
 
 .status-badge.disconnected {
-  background: rgba(244, 67, 54, 0.3);
-  color: #fff;
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .error-message {
-  color: #ff6b6b;
+  color: #dc2626;
   font-weight: 500;
+  font-size: 0.85rem;
 }
 
 .app-main {
@@ -220,7 +231,7 @@ const formatBytes = (bytes) => {
 
 .grid {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: 280px 1fr;
   gap: 2rem;
 }
 
@@ -235,19 +246,21 @@ const formatBytes = (bytes) => {
   background: white;
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e7ff;
+  box-shadow: 0 1px 3px rgba(99, 102, 241, 0.1);
 }
 
 .subscriptions-list h3,
 .server-status h3 {
   margin: 0 0 1rem 0;
-  color: #333;
-  font-size: 1.1rem;
+  color: #4f46e5;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .empty-state {
   text-align: center;
-  color: #999;
+  color: #9ca3af;
   padding: 1rem;
   font-size: 0.9rem;
 }
@@ -262,27 +275,29 @@ const formatBytes = (bytes) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem;
-  background: #f5f5f5;
+  padding: 0.75rem 1rem;
+  background: #f9f5ff;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
-  border-left: 3px solid transparent;
+  border: 1px solid transparent;
 }
 
 .subscription-item:hover {
-  background: #efefef;
+  background: #e0e7ff;
+  border-color: #6366f1;
 }
 
 .subscription-item.active {
-  background: #667eea;
+  background: #6366f1;
   color: white;
-  border-left-color: #764ba2;
+  border-color: #4f46e5;
 }
 
 .keyword-name {
   font-weight: 500;
   flex: 1;
+  font-size: 0.95rem;
 }
 
 .unsubscribe-btn {
@@ -301,42 +316,46 @@ const formatBytes = (bytes) => {
 }
 
 .status-info {
-  background: #f9f9f9;
+  background: #f9f5ff;
   padding: 1rem;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   margin-bottom: 1rem;
+  border: 1px solid #e0e7ff;
 }
 
 .status-info p {
   margin: 0.5rem 0;
-  color: #666;
+  color: #6b7280;
 }
 
 .status-info strong {
-  color: #333;
+  color: #4f46e5;
 }
 
 .refresh-btn {
   width: 100%;
-  padding: 0.5rem;
-  background: #667eea;
+  padding: 0.75rem;
+  background: #6366f1;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
 }
 
 .refresh-btn:hover {
-  background: #764ba2;
+  background: #4f46e5;
+  box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2);
 }
 
 .news-section {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e7ff;
+  box-shadow: 0 1px 3px rgba(99, 102, 241, 0.1);
   overflow: hidden;
 }
 

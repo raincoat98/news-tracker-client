@@ -17,6 +17,7 @@ const reconnectAttempts = ref(0)
 const maxReconnectAttempts = 5
 
 const newsUpdates = ref({})
+const newsPageData = ref({})
 
 export function useNewsSocket() {
   const store = useSubscriptionStore()
@@ -109,7 +110,7 @@ export function useNewsSocket() {
         setTimeout(() => {
           console.log('[구독] 캐시된 뉴스 요청:', data.keyword)
           getCachedNews(data.keyword)
-        }, 200)
+        }, 1000)
       } else {
         console.warn('[구독 오류] 잘못된 응답 형식:', data)
       }
@@ -118,7 +119,8 @@ export function useNewsSocket() {
     socket.value.on('unsubscribed', (data) => {
       if (data?.keyword) {
         store.removeSubscription(data.keyword)
-        delete newsUpdates.value[data.keyword]
+        const { [data.keyword]: _, ...rest } = newsUpdates.value
+        newsUpdates.value = rest
         console.log('[구독 취소]', data.keyword)
       }
     })
@@ -127,6 +129,21 @@ export function useNewsSocket() {
       if (data?.keyword && Array.isArray(data?.news)) {
         newsUpdates.value[data.keyword] = data.news
         console.log('[캐시된 뉴스]', data.keyword, data.news.length, '개')
+      }
+    })
+
+    socket.value.on('news-page', (data) => {
+      if (data?.keyword && Array.isArray(data?.items)) {
+        const key = `${data.keyword}_page_${data.page}`
+        newsPageData.value[key] = data
+
+        // 페이지 1일 때 newsUpdates도 함께 업데이트 (전체 뉴스용)
+        if (data.page === 1) {
+          newsUpdates.value[data.keyword] = data.items
+          console.log('[페이지 뉴스 업데이트]', data.keyword, `${data.page}/${data.totalPages} 페이지`, data.items.length, '개')
+        }
+
+        console.log('[페이지 뉴스]', data.keyword, `${data.page}/${data.totalPages} 페이지`, data.items.length, '개')
       }
     })
 
@@ -153,7 +170,6 @@ export function useNewsSocket() {
 
     if (store.subscriptions.size > 0) {
       if (store.subscriptions.has(trimmedKeyword)) {
-        connectionError.value = `이미 "${trimmedKeyword}"을(를) 구독 중입니다`
         console.warn('[구독] 중복 구독:', trimmedKeyword)
         return
       }
@@ -185,10 +201,47 @@ export function useNewsSocket() {
     socket.value.emit('get-cached-news', { keyword })
   }
 
+  const getNewsPage = (keyword, pageNumber = 1, options = {}) => {
+    if (!socket.value?.connected) {
+      console.error('[페이징] Socket이 연결되어 있지 않습니다')
+      return
+    }
+
+    const { display = 10, sort = 'date' } = options
+
+    console.log('[페이징 요청]', { keyword, pageNumber, display, sort })
+    socket.value.emit('get-news-page', {
+      keyword,
+      pageNumber,
+      display,
+      sort
+    })
+  }
+
   const getServerStatus = () => {
     if (!socket.value?.connected) return
 
     socket.value.emit('get-status')
+  }
+
+  const refreshAllNewsDisplay = (display, sort = 'date') => {
+    if (!socket.value?.connected) {
+      console.error('[전체 뉴스 새로고침] Socket이 연결되어 있지 않습니다')
+      return
+    }
+
+    // 모든 구독 중인 키워드에 대해 새로운 display로 첫 페이지 데이터 요청
+    const keywords = store.getAllSubscriptions
+    console.log(`[전체 뉴스 새로고침] ${keywords.length}개 키워드, display: ${display}`)
+
+    keywords.forEach((keyword) => {
+      socket.value.emit('get-news-page', {
+        keyword,
+        pageNumber: 1,
+        display,
+        sort
+      })
+    })
   }
 
   const resubscribeAll = () => {
@@ -206,14 +259,14 @@ export function useNewsSocket() {
     }
 
     console.log('[재구독] 시작:', savedKeywords.length, '개')
-    savedKeywords.forEach((keyword) => {
+    savedKeywords.forEach((keyword, index) => {
       console.log('[재구독] 키워드 구독 중:', keyword)
       subscribe(keyword)
 
       setTimeout(() => {
         console.log('[재구독] 캐시된 뉴스 요청:', keyword)
         getCachedNews(keyword)
-      }, 300)
+      }, 1000 + (index * 500))
     })
   }
 
@@ -239,13 +292,16 @@ export function useNewsSocket() {
       return store.getAllSubscriptions
     }),
     serverStatus,
+    newsPageData: computed(() => newsPageData.value),
     subscribe,
     unsubscribe,
     getCachedNews,
+    getNewsPage,
     getServerStatus,
     getNews,
     getAllNews,
     resubscribeAll,
+    refreshAllNewsDisplay,
     socket: computed(() => socket.value)
   }
 }

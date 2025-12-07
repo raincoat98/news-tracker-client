@@ -35,7 +35,9 @@ export function useNewsQuery(newsSocket) {
 
   const selectKeyword = (keyword) => {
     selectedKeyword.value = keyword
-    newsSocket.getCachedNews(keyword)
+    // getNewsPage만 사용 (display: 10으로 첫 페이지 데이터 가져오기)
+    // getCachedNews는 호출하지 않음 (이전 캐시 데이터 방지)
+    newsSocket.getNewsPage(keyword, 1, { display: 10, sort: 'date' })
   }
 
   const clearSelection = () => {

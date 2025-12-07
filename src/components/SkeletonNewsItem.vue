@@ -23,9 +23,9 @@
   display: flex;
   gap: 1rem;
   padding: 1.5rem;
-  background: #f9f9f9;
+  background: #f9f5ff;
   border-radius: 8px;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #6366f1;
   animation: slideIn 0.3s ease-out;
 }
 
@@ -47,7 +47,7 @@
 
 .skeleton-title {
   height: 20px;
-  background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+  background: linear-gradient(90deg, #e0e7ff 25%, #f0f4ff 50%, #e0e7ff 75%);
   background-size: 200% 100%;
   border-radius: 4px;
   margin-bottom: 0.75rem;
@@ -63,7 +63,7 @@
 
 .skeleton-line {
   height: 14px;
-  background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+  background: linear-gradient(90deg, #e0e7ff 25%, #f0f4ff 50%, #e0e7ff 75%);
   background-size: 200% 100%;
   border-radius: 4px;
   animation: loading 1.5s infinite;
@@ -82,7 +82,7 @@
 .skeleton-source {
   height: 20px;
   width: 60px;
-  background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+  background: linear-gradient(90deg, #e0e7ff 25%, #f0f4ff 50%, #e0e7ff 75%);
   background-size: 200% 100%;
   border-radius: 4px;
   animation: loading 1.5s infinite;
@@ -91,7 +91,7 @@
 .skeleton-date {
   height: 14px;
   width: 80px;
-  background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+  background: linear-gradient(90deg, #e0e7ff 25%, #f0f4ff 50%, #e0e7ff 75%);
   background-size: 200% 100%;
   border-radius: 4px;
   animation: loading 1.5s infinite;
@@ -101,7 +101,7 @@
   flex-shrink: 0;
   width: 40px;
   height: 40px;
-  background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+  background: linear-gradient(90deg, #e0e7ff 25%, #f0f4ff 50%, #e0e7ff 75%);
   background-size: 200% 100%;
   border-radius: 50%;
   animation: loading 1.5s infinite;
